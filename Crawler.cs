@@ -32,34 +32,41 @@ namespace Program
                 double propHash = 100f / strWidth;  // amount of % represented by a single '#' sumbol
                 int numHash = 0;  // number of '#' symbols rendered
 
-                byte[] buffer = new byte[1024 * 8];
+                byte[] buffer = new byte[4096];
 
                 (_, int startTop) = Console.GetCursorPosition();
 
                 int read, readTotal = 0;
+                double percent = 0d;
                 while ((read = await contentsStream.ReadAsync(buffer, 0, buffer.Length)) > 0)
                 {
-                    Console.SetCursorPosition(0, startTop);
-
                     readTotal += read;
 
-                    double percent = 100d * readTotal / contentsStreamLen;
+                    double newPercent = Math.Round(100d * readTotal / contentsStreamLen);
 
-                    // Calculate the number of new '#' symbols to add to progress bar
-                    if (percent > numHash * propHash)
+                    if (newPercent > percent)
                     {
-                        double percentDiff = percent - numHash * propHash;
-                        int numNewHashes = (int)Math.Round(percentDiff / propHash);
-                        sb.Remove(numHash, numNewHashes);
-                        sb.Insert(numHash, new String('#', numNewHashes));
-                        numHash += numNewHashes;
-                    }
+                        percent = newPercent;
 
-                    Console.Write($"{sb} {percent:0}%");
+                        // Calculate the number of new '#' symbols to add to progress bar
+                        if (percent >= (numHash + 1) * propHash)
+                        {
+                            double percentDiff = percent - numHash * propHash;
+                            int numNewHashes = (int)Math.Round(percentDiff / propHash);
+                            sb.Remove(numHash, numNewHashes);
+                            sb.Insert(numHash, new String('#', numNewHashes));
+                            numHash += numNewHashes;
+                        }
+
+                        Console.SetCursorPosition(0, startTop);
+                        Console.Write($"{sb} {percent:0}%");
+                    }
 
                     fs.Write(buffer, 0, read);
                 }
             }
+
+            contentsStream.Dispose();
 
             Console.WriteLine("Download has completed successfully");
         }
