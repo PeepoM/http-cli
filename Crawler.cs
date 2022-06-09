@@ -20,57 +20,58 @@ namespace Program
 
         public async Task DownloadContents(string fileName, long contentsStreamLen, Stream contentsStream)
         {
-            string cwd = Directory.GetCurrentDirectory();
-            string filePath = Path.Combine(cwd, fileName);
-
             Console.WriteLine("Proceeding to download files:");
 
-            using (FileStream fs = File.Create(filePath))
+            using (Stream source = contentsStream)
             {
-                int strWidth = Console.WindowWidth - 5;
-                StringBuilder sb = new StringBuilder();
-                double propHash = 100f / strWidth;  // amount of % represented by a single '#' sumbol
-                int numHash = 0;  // number of '#' symbols rendered
+                string cwd = Directory.GetCurrentDirectory();
+                string filePath = Path.Combine(cwd, fileName);
 
-                byte[] buffer = new byte[4096];
-
-                (_, int startTop) = Console.GetCursorPosition();
-
-                int read, readTotal = 0;
-                double percent = 0d;
-                while ((read = await contentsStream.ReadAsync(buffer, 0, buffer.Length)) > 0)
+                using (Stream fileStream = File.Create(filePath))
                 {
-                    readTotal += read;
+                    int strWidth = Console.WindowWidth - 5;
+                    StringBuilder sb = new StringBuilder();
+                    double propHash = 100f / strWidth;  // amount of % represented by a single '#' sumbol
+                    int numHash = 0;  // number of '#' symbols rendered
 
-                    double newPercent = Math.Round(100d * readTotal / contentsStreamLen);
+                    byte[] buffer = new byte[4096];
 
-                    if (newPercent > percent)
+                    (_, int startTop) = Console.GetCursorPosition();
+
+                    int read, readTotal = 0;
+                    double percent = 0d;
+                    while ((read = await source.ReadAsync(buffer, 0, buffer.Length)) > 0)
                     {
-                        percent = newPercent;
+                        readTotal += read;
 
-                        // Calculate the number of new '#' symbols to add to progress bar
-                        if (percent >= (numHash + 1) * propHash)
+                        double newPercent = Math.Round(100d * readTotal / contentsStreamLen);
+
+                        if (newPercent > percent)
                         {
-                            double percentDiff = percent - numHash * propHash;
-                            int numNewHashes = (int)Math.Round(percentDiff / propHash);
+                            percent = newPercent;
 
-                            string newHashes = new String('#', numNewHashes);
-                            sb.Append(newHashes);
+                            // Calculate the number of new '#' symbols to add to progress bar
+                            if (percent >= (numHash + 1) * propHash)
+                            {
+                                double percentDiff = percent - numHash * propHash;
+                                int numNewHashes = (int)Math.Round(percentDiff / propHash);
 
-                            numHash += numNewHashes;
+                                string newHashes = new String('#', numNewHashes);
+                                sb.Append(newHashes);
+
+                                numHash += numNewHashes;
+                            }
+
+                            string dashes = new String('-', strWidth - numHash);
+
+                            Console.SetCursorPosition(0, startTop);
+                            Console.Write($"{sb}{dashes} {percent:0}%");
                         }
 
-                        string dashes = new String('-', strWidth - numHash);
-
-                        Console.SetCursorPosition(0, startTop);
-                        Console.Write($"{sb}{dashes} {percent:0}%");
+                        fileStream.Write(buffer, 0, read);
                     }
-
-                    fs.Write(buffer, 0, read);
                 }
             }
-
-            contentsStream.Dispose();
 
             Console.WriteLine("Download has completed successfully");
         }
