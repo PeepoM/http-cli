@@ -28,7 +28,7 @@ namespace Program
             using (FileStream fs = File.Create(filePath))
             {
                 int strWidth = Console.WindowWidth - 5;
-                StringBuilder sb = new StringBuilder(new String('-', strWidth));
+                StringBuilder sb = new StringBuilder();
                 double propHash = 100f / strWidth;  // amount of % represented by a single '#' sumbol
                 int numHash = 0;  // number of '#' symbols rendered
 
@@ -53,13 +53,17 @@ namespace Program
                         {
                             double percentDiff = percent - numHash * propHash;
                             int numNewHashes = (int)Math.Round(percentDiff / propHash);
-                            sb.Remove(numHash, numNewHashes);
-                            sb.Insert(numHash, new String('#', numNewHashes));
+
+                            string newHashes = new String('#', numNewHashes);
+                            sb.Append(newHashes);
+
                             numHash += numNewHashes;
                         }
 
+                        string dashes = new String('-', strWidth - numHash);
+
                         Console.SetCursorPosition(0, startTop);
-                        Console.Write($"{sb} {percent:0}%");
+                        Console.Write($"{sb}{dashes} {percent:0}%");
                     }
 
                     fs.Write(buffer, 0, read);
