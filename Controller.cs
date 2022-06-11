@@ -1,6 +1,6 @@
 namespace project;
 
-public class Controller
+public static class Controller
 {
     public static async Task<int> Main(string[] args)
     {

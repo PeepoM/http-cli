@@ -16,8 +16,8 @@ public class RetryHandler : DelegatingHandler
         CancellationToken cancellationToken)
     {
         HttpResponseMessage response;
-        bool isIdempotent = request.Method != HttpMethod.Post &&
-                            request.Method != HttpMethod.Patch;
+        var isIdempotent = request.Method != HttpMethod.Post &&
+                           request.Method != HttpMethod.Patch;
 
         int i = 0, statusCode;
         do
@@ -26,11 +26,10 @@ public class RetryHandler : DelegatingHandler
 
             statusCode = (int)response.StatusCode;
 
-            if ((statusCode is >= 500 and < 600) && isIdempotent && i + 1 < _maxRetries)
-            {
-                Console.WriteLine($"Waiting {_waitTimeMillis / 1000} sec before trying again...");
-                await Task.Delay(_waitTimeMillis, cancellationToken);
-            }
+            if ((statusCode is < 500 or >= 600) || !isIdempotent || i + 1 >= _maxRetries) continue;
+
+            Console.WriteLine($"Waiting {_waitTimeMillis / 1000} sec before trying again...");
+            await Task.Delay(_waitTimeMillis, cancellationToken);
         } while ((statusCode is >= 500 and < 600) && isIdempotent && i++ < _maxRetries);
 
         return response;

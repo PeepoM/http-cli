@@ -14,26 +14,26 @@ public class Command
 
     public async Task<int> InvokeCommandAsync(string[] args)
     {
-        Argument<Uri> urlArgument = new Argument<Uri>(
+        var urlArgument = new Argument<Uri>(
             name: "URL",
             description: "Address of a web page");
 
-        Option<string?> outputOption = new Option<string?>(
+        var outputOption = new Option<string?>(
             name: "--output",
             description: "Write output to a file instead of stdout");
         outputOption.AddAlias("-o");
 
-        Option<string?> requestOption = new Option<string?>(
+        var requestOption = new Option<string?>(
             name: "--request",
             description: "Specify type of HTTP request command to use");
         requestOption.AddAlias("-X");
 
-        Option<string?> dataOption = new Option<string?>(
+        var dataOption = new Option<string?>(
             name: "--data",
             description: "Initiate an HTTP POST request to post data");
         dataOption.AddAlias("-d");
 
-        RootCommand rootCommand = new RootCommand("curl-like command line tool to transfer data to and from servers");
+        var rootCommand = new RootCommand("curl-like command line tool to transfer data to and from servers");
         rootCommand.SetHandler(
             async (output, request, data, url) => { await HandleOptions(output, request, data, url!); },
             outputOption, requestOption, dataOption, urlArgument);
