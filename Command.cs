@@ -47,14 +47,17 @@ public class Command
 
     private async Task HandleOptions(string? output, string? request, string? data, Uri url)
     {
-        HttpResponseMessage response;
+        Task<HttpResponseMessage> task;
 
         if (data != null || request == Http.Post)
-            response = await _crawler.PostData(data, url);
+            task = _crawler.PostData(data, url);
         else if (request == Http.Get)
-            response = await _crawler.FetchContents(url);
+            task = _crawler.FetchContents(url);
         else
-            response = await _crawler.FetchContents(url);
+            task = _crawler.FetchContents(url);
+
+        Console.WriteLine("Waiting for a response...");
+        var response = await task;
 
         if (output != null)
             await _crawler.DownloadResponseContentsAsync(output, response);

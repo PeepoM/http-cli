@@ -82,11 +82,13 @@ public class Crawler : ICrawler
     public async Task<HttpResponseMessage> FetchContents(Uri url)
     {
         var request = new HttpRequestMessage(HttpMethod.Get, url);
-        var response = await _client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
 
-        Console.WriteLine($"Sending a GET request to {url}");
+        Console.WriteLine($"Sending a {request.Method} request to the server");
+
+        var response = await _client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
         response.EnsureSuccessStatusCode();
-        Console.WriteLine($"Files successfully fetched from the server\n");
+
+        Console.WriteLine($"Files successfully fetched\n");
 
         return response;
     }
