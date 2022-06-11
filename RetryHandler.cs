@@ -1,11 +1,11 @@
 namespace project;
 
-internal class RetryHandler : DelegatingHandler
+public class RetryHandler : DelegatingHandler
 {
     private readonly int _maxRetries;
     private readonly int _waitTimeMillis;
 
-    public RetryHandler(int maxRetries = 3, int waitTimeMillis = 3000) : base(new HttpClientHandler())
+    public RetryHandler(int maxRetries = 3, int waitTimeMillis = 3000)
     {
         _maxRetries = maxRetries;
         _waitTimeMillis = waitTimeMillis;
@@ -29,7 +29,7 @@ internal class RetryHandler : DelegatingHandler
             if ((statusCode is >= 500 and < 600) && isIdempotent && i + 1 < _maxRetries)
             {
                 Console.WriteLine($"Waiting {_waitTimeMillis / 1000} sec before trying again...");
-                Thread.Sleep(_waitTimeMillis);
+                await Task.Delay(_waitTimeMillis, cancellationToken);
             }
         } while ((statusCode is >= 500 and < 600) && isIdempotent && i++ < _maxRetries);
 
