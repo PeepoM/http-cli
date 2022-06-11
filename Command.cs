@@ -47,21 +47,32 @@ public class Command
 
     private async Task HandleOptions(string? output, string? request, string? data, Uri url)
     {
-        Task<HttpResponseMessage> task;
+        try
+        {
+            Task<HttpResponseMessage> task;
 
-        if (data != null || request == Http.Post)
-            task = _crawler.PostData(data, url);
-        else if (request == Http.Get)
-            task = _crawler.FetchContents(url);
-        else
-            task = _crawler.FetchContents(url);
+            if (data != null || request == Http.Post)
+                task = _crawler.PostData(data, url);
+            else if (request == Http.Get)
+                task = _crawler.FetchContents(url);
+            else
+                task = _crawler.FetchContents(url);
 
-        Console.WriteLine("Waiting for a response...");
-        var response = await task;
+            Console.WriteLine("Waiting for a response...");
+            var response = await task;
 
-        if (output != null)
-            await _crawler.DownloadResponseContentsAsync(output, response);
-        else
-            await _crawler.DisplayResultAsync(response);
+            if (output != null)
+                await _crawler.DownloadResponseContentsAsync(output, response);
+            else
+                await _crawler.DisplayResultAsync(response);
+        }
+        catch (HttpRequestException e)
+        {
+            Console.WriteLine($"Exception: {e.Message}");
+        }
+        catch (TaskCanceledException e)
+        {
+            Console.WriteLine($"Exception: {e.Message}");
+        }
     }
 }

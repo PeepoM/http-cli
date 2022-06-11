@@ -82,11 +82,9 @@ public class Crawler : ICrawler
     public async Task<HttpResponseMessage> FetchContents(Uri url)
     {
         var request = new HttpRequestMessage(HttpMethod.Get, url);
-
         Console.WriteLine($"Sending a {request.Method} request to the server");
 
         var response = await _client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
-        response.EnsureSuccessStatusCode();
 
         Console.WriteLine($"Files successfully fetched\n");
 
@@ -109,8 +107,11 @@ public class Crawler : ICrawler
 
         var request = new HttpRequestMessage(HttpMethod.Post, url);
         request.Content = formContent;
+        Console.WriteLine($"Sending a {request.Method} request to the server");
 
         var response = await _client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
+
+        Console.WriteLine("Data successfully posted\n");
 
         return response;
     }
