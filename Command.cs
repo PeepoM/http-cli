@@ -57,7 +57,7 @@ public class Command
             response = await _crawler.FetchContents(url);
 
         if (output != null)
-            await _crawler.DownloadResultContentsAsync(output, response);
+            await _crawler.DownloadResponseContentsAsync(output, response);
         else
             await _crawler.DisplayResultAsync(response);
     }

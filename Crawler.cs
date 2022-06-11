@@ -19,7 +19,7 @@ public class Crawler : ICrawler
         Console.WriteLine(contents);
     }
 
-    public async Task DownloadResultContentsAsync(string fileName, HttpResponseMessage response)
+    public async Task DownloadResponseContentsAsync(string fileName, HttpResponseMessage response)
     {
         Console.WriteLine("Proceeding to download files:");
 
@@ -32,7 +32,7 @@ public class Crawler : ICrawler
             {
                 var strWidth = Console.WindowWidth - 5;
                 var sb = new StringBuilder();
-                double propHash = 100f / strWidth; // amount of % represented by a single '#' symbol
+                var propHash = 100d / strWidth; // amount of % represented by a single '#' symbol
                 var numHash = 0; // number of '#' symbols rendered
 
                 var buffer = new byte[4096];

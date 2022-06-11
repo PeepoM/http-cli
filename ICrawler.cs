@@ -4,7 +4,7 @@ public interface ICrawler
 {
     Task DisplayResultAsync(HttpResponseMessage response);
 
-    Task DownloadResultContentsAsync(string fileName, HttpResponseMessage response);
+    Task DownloadResponseContentsAsync(string fileName, HttpResponseMessage response);
 
     Task<HttpResponseMessage> FetchContents(Uri url);
 
