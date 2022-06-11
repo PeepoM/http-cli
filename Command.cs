@@ -1,10 +1,18 @@
 using System.CommandLine;
-using Program;
 using static System.Net.WebRequestMethods;
 
-class Command
+namespace project;
+
+public class Command
 {
-    public static async Task<int> InitializeCommand(Crawler crawler, string[] args)
+    private readonly ICrawler _crawler;
+
+    public Command(ICrawler crawler)
+    {
+        _crawler = crawler;
+    }
+
+    public async Task<int> InvokeCommandAsync(string[] args)
     {
         Argument<Uri> urlArgument = new Argument<Uri>(
             name: "URL",
@@ -26,10 +34,9 @@ class Command
         dataOption.AddAlias("-d");
 
         RootCommand rootCommand = new RootCommand("curl-like command line tool to transfer data to and from servers");
-        rootCommand.SetHandler(async (output, request, data, url) =>
-        {
-            await HandleOptions(crawler, output, request, data, url!);
-        }, outputOption, requestOption, dataOption, urlArgument);
+        rootCommand.SetHandler(
+            async (output, request, data, url) => { await HandleOptions(output, request, data, url!); },
+            outputOption, requestOption, dataOption, urlArgument);
         rootCommand.AddArgument(urlArgument);
         rootCommand.AddOption(outputOption);
         rootCommand.AddOption(requestOption);
@@ -38,26 +45,20 @@ class Command
         return await rootCommand.InvokeAsync(args);
     }
 
-    private static async Task HandleOptions(
-        Crawler crawler,
-        string? output,
-        string? request,
-        string? data,
-        Uri url)
+    private async Task HandleOptions(string? output, string? request, string? data, Uri url)
     {
-        Stream? contents = null;
-        long size = 0L;
+        HttpResponseMessage response;
 
         if (data != null || request == Http.Post)
-            contents = await crawler.PostData(data, url);
+            response = await _crawler.PostData(data, url);
         else if (request == Http.Get)
-            (size, contents) = await crawler.FetchContents(url);
+            response = await _crawler.FetchContents(url);
         else
-            (size, contents) = await crawler.FetchContents(url);
+            response = await _crawler.FetchContents(url);
 
         if (output != null)
-            await crawler.DownloadContents(output, size!, contents!);
+            await _crawler.DownloadResultContentsAsync(output, response);
         else
-            await crawler.DisplayContents(contents!);
+            await _crawler.DisplayResultAsync(response);
     }
 }

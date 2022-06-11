@@ -1,6 +1,6 @@
-using Program;
+namespace project;
 
-class Controller
+public class Controller
 {
     public static async Task<int> Main(string[] args)
     {
@@ -11,7 +11,7 @@ class Controller
 
         // Website to post file for testing purposes
         // "https://httpbin.org/post"
-
-        return await Command.InitializeCommand(new Crawler(), args);
+        ICrawler crawler = new Crawler();
+        return await new Command(crawler).InvokeCommandAsync(args);
     }
 }

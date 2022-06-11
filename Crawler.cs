@@ -1,114 +1,115 @@
 ﻿using System.Text;
 
-namespace Program
+namespace project;
+
+public class Crawler : ICrawler
 {
-    class Crawler
+    private readonly HttpClient _client;
+
+    public Crawler()
     {
-        private readonly HttpClient _client;
+        DelegatingHandler retryHandler = new RetryHandler();
+        retryHandler.InnerHandler = new HttpClientHandler();
+        _client = new HttpClient(retryHandler);
+    }
 
-        public Crawler()
+    public async Task DisplayResultAsync(HttpResponseMessage response)
+    {
+        string contents = await response.Content.ReadAsStringAsync();
+        Console.WriteLine(contents);
+    }
+
+    public async Task DownloadResultContentsAsync(string fileName, HttpResponseMessage response)
+    {
+        Console.WriteLine("Proceeding to download files:");
+
+        await using (Stream source = await response.Content.ReadAsStreamAsync())
         {
-            _client = new HttpClient();
-        }
+            string cwd = Directory.GetCurrentDirectory();
+            string filePath = Path.Combine(cwd, fileName);
 
-        public async Task DisplayContents(Stream streamContents)
-        {
-            StreamReader reader = new StreamReader(streamContents);
-            string contents = await reader.ReadToEndAsync();
-            Console.WriteLine(contents);
-        }
-
-        public async Task DownloadContents(string fileName, long contentsStreamLen, Stream contentsStream)
-        {
-            Console.WriteLine("Proceeding to download files:");
-
-            using (Stream source = contentsStream)
+            await using (Stream fileStream = File.Create(filePath))
             {
-                string cwd = Directory.GetCurrentDirectory();
-                string filePath = Path.Combine(cwd, fileName);
+                int strWidth = Console.WindowWidth - 5;
+                StringBuilder sb = new StringBuilder();
+                double propHash = 100f / strWidth; // amount of % represented by a single '#' symbol
+                int numHash = 0; // number of '#' symbols rendered
 
-                using (Stream fileStream = File.Create(filePath))
+                byte[] buffer = new byte[4096];
+
+                long sourceLen = response.Content.Headers.ContentLength ?? -1L;
+
+                (_, int startTop) = Console.GetCursorPosition();
+
+                int read, readTotal = 0;
+                double percent = 0d;
+                while ((read = await source.ReadAsync(buffer, 0, buffer.Length)) > 0)
                 {
-                    int strWidth = Console.WindowWidth - 5;
-                    StringBuilder sb = new StringBuilder();
-                    double propHash = 100f / strWidth;  // amount of % represented by a single '#' sumbol
-                    int numHash = 0;  // number of '#' symbols rendered
+                    readTotal += read;
 
-                    byte[] buffer = new byte[4096];
+                    double newPercent = Math.Round(100d * readTotal / sourceLen);
 
-                    (_, int startTop) = Console.GetCursorPosition();
-
-                    int read, readTotal = 0;
-                    double percent = 0d;
-                    while ((read = await source.ReadAsync(buffer, 0, buffer.Length)) > 0)
+                    if (newPercent > percent)
                     {
-                        readTotal += read;
+                        percent = newPercent;
 
-                        double newPercent = Math.Round(100d * readTotal / contentsStreamLen);
-
-                        if (newPercent > percent)
+                        // Calculate the number of new '#' symbols to add to progress bar
+                        if (percent >= (numHash + 1) * propHash)
                         {
-                            percent = newPercent;
+                            double percentDiff = percent - numHash * propHash;
+                            int numNewHashes = (int)Math.Round(percentDiff / propHash);
 
-                            // Calculate the number of new '#' symbols to add to progress bar
-                            if (percent >= (numHash + 1) * propHash)
-                            {
-                                double percentDiff = percent - numHash * propHash;
-                                int numNewHashes = (int)Math.Round(percentDiff / propHash);
+                            string newHashes = new string('#', numNewHashes);
+                            sb.Append(newHashes);
 
-                                string newHashes = new String('#', numNewHashes);
-                                sb.Append(newHashes);
-
-                                numHash += numNewHashes;
-                            }
-
-                            string dashes = new String('-', strWidth - numHash);
-
-                            Console.SetCursorPosition(0, startTop);
-                            Console.Write($"{sb}{dashes} {percent:0}%");
+                            numHash += numNewHashes;
                         }
 
-                        fileStream.Write(buffer, 0, read);
+                        string dashes = new string('-', strWidth - numHash);
+
+                        Console.SetCursorPosition(0, startTop);
+                        Console.Write($"{sb}{dashes} {percent:0}%");
                     }
+
+                    await fileStream.WriteAsync(buffer, 0, read);
                 }
             }
-
-            Console.WriteLine("Download has completed successfully");
         }
 
-        public async Task<(long, Stream?)> FetchContents(Uri url)
+        Console.WriteLine("Download has completed successfully");
+    }
+
+    public async Task<HttpResponseMessage> FetchContents(Uri url)
+    {
+        HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, url);
+        HttpResponseMessage response = await _client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
+
+        Console.WriteLine($"Sending a GET request to {url}");
+        response.EnsureSuccessStatusCode();
+        Console.WriteLine($"Files successfully fetched from the server\n");
+
+        return response;
+    }
+
+    public async Task<HttpResponseMessage> PostData(string? data, Uri url)
+    {
+        FormUrlEncodedContent? formContent = null;
+
+        if (data != null)
         {
-            HttpResponseMessage response = await _client.GetAsync(url, HttpCompletionOption.ResponseHeadersRead);
+            // Have to convert delimited string to dictionary the same as "curl" does
+            Dictionary<string, string> dict = data.Split('&', StringSplitOptions.RemoveEmptyEntries)
+                .Select(part => part.Split('=', 2)).ToDictionary(split => split[0],
+                    split => split.Length == 2 ? split[1] : "");
 
-            Console.WriteLine($"Sending a GET request to {url}");
-            response.EnsureSuccessStatusCode();
-            Console.WriteLine($"Files successfully fetched from the server\n");
-
-            long streamLen = response.Content.Headers.ContentLength.HasValue ?
-                        response.Content.Headers.ContentLength.Value : -1L;
-
-            return (streamLen, await response.Content.ReadAsStreamAsync());
+            formContent = new FormUrlEncodedContent(dict);
         }
 
-        public async Task<Stream?> PostData(string? data, Uri url)
-        {
-            FormUrlEncodedContent? formContent = null;
+        HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, url);
+        request.Content = formContent;
 
-            if (data != null)
-            {
-                // Have to convert delimited string to dictionary the same as "curl" does
-                Dictionary<string, string> dict = data.
-                            Split('&', StringSplitOptions.RemoveEmptyEntries).
-                            Select(part => part.Split('=', 2)).
-                            ToDictionary(split => split[0],
-                                        split => split.Length == 2 ? split[1] : "");
+        HttpResponseMessage response = await _client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
 
-                formContent = new FormUrlEncodedContent(dict);
-            }
-
-            HttpResponseMessage response = await _client.PostAsync(url, formContent);
-            response.EnsureSuccessStatusCode();
-            return await response.Content.ReadAsStreamAsync();
-        }
+        return response;
     }
 }
