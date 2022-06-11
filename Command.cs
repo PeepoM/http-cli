@@ -35,7 +35,7 @@ public class Command
 
         var rootCommand = new RootCommand("curl-like command line tool to transfer data to and from servers");
         rootCommand.SetHandler(
-            async (output, request, data, url) => { await HandleOptions(output, request, data, url!); },
+            async (output, request, data, url) => { await HandleOptionsAsync(output, request, data, url!); },
             outputOption, requestOption, dataOption, urlArgument);
         rootCommand.AddArgument(urlArgument);
         rootCommand.AddOption(outputOption);
@@ -45,18 +45,18 @@ public class Command
         return await rootCommand.InvokeAsync(args);
     }
 
-    private async Task HandleOptions(string? output, string? request, string? data, Uri url)
+    private async Task HandleOptionsAsync(string? output, string? request, string? data, Uri url)
     {
         try
         {
             Task<HttpResponseMessage> task;
 
             if (data != null || request == Http.Post)
-                task = _crawler.PostData(data, url);
+                task = _crawler.PostDataAsync(data, url);
             else if (request == Http.Get)
-                task = _crawler.FetchContents(url);
+                task = _crawler.FetchContentsAsync(url);
             else
-                task = _crawler.FetchContents(url);
+                task = _crawler.FetchContentsAsync(url);
 
             Console.WriteLine("Waiting for a response...");
             var response = await task;
@@ -64,7 +64,7 @@ public class Command
             if (output != null)
                 await _crawler.DownloadResponseContentsAsync(output, response);
             else
-                await _crawler.DisplayResultAsync(response);
+                await _crawler.DisplayResponseContentsAsync(response);
         }
         catch (HttpRequestException e)
         {

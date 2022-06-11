@@ -13,7 +13,7 @@ public class Crawler : ICrawler
         _client = new HttpClient(retryHandler);
     }
 
-    public async Task DisplayResultAsync(HttpResponseMessage response)
+    public async Task DisplayResponseContentsAsync(HttpResponseMessage response)
     {
         var contents = await response.Content.ReadAsStringAsync();
         Console.WriteLine(contents);
@@ -79,7 +79,7 @@ public class Crawler : ICrawler
         Console.WriteLine("Download has completed successfully");
     }
 
-    public async Task<HttpResponseMessage> FetchContents(Uri url)
+    public async Task<HttpResponseMessage> FetchContentsAsync(Uri url)
     {
         var request = new HttpRequestMessage(HttpMethod.Get, url);
         Console.WriteLine($"Sending a {request.Method} request to the server");
@@ -91,7 +91,7 @@ public class Crawler : ICrawler
         return response;
     }
 
-    public async Task<HttpResponseMessage> PostData(string? data, Uri url)
+    public async Task<HttpResponseMessage> PostDataAsync(string? data, Uri url)
     {
         FormUrlEncodedContent? formContent = null;
 
