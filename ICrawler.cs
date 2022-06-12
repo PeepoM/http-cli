@@ -2,11 +2,11 @@
 
 public interface ICrawler
 {
-    Task DisplayResponseContentsAsync(HttpResponseMessage response);
+    Task DisplayContentAsync(HttpContent httpContent);
 
-    Task DownloadResponseContentsAsync(string fileName, HttpResponseMessage response);
+    Task DownloadContentAsync(string fileName, HttpContent httpContent);
 
-    Task<HttpResponseMessage> FetchContentsAsync(Uri url);
+    Task<HttpContent> FetchContentAsync(Uri url);
 
-    Task<HttpResponseMessage> PostDataAsync(string? data, Uri url);
+    Task<HttpContent> PostDataAsync(string? data, Uri url);
 }

@@ -13,17 +13,17 @@ public class Crawler : ICrawler
         _client = new HttpClient(retryHandler);
     }
 
-    public async Task DisplayResponseContentsAsync(HttpResponseMessage response)
+    public async Task DisplayContentAsync(HttpContent httpContent)
     {
-        var contents = await response.Content.ReadAsStringAsync();
-        Console.WriteLine(contents);
+        var strContent = await httpContent.ReadAsStringAsync();
+        Console.WriteLine(strContent);
     }
 
-    public async Task DownloadResponseContentsAsync(string fileName, HttpResponseMessage response)
+    public async Task DownloadContentAsync(string fileName, HttpContent httpContent)
     {
         Console.WriteLine("Proceeding to download files:");
 
-        await using (var source = await response.Content.ReadAsStreamAsync())
+        await using (var source = await httpContent.ReadAsStreamAsync())
         {
             var cwd = Directory.GetCurrentDirectory();
             var filePath = Path.Combine(cwd, fileName);
@@ -37,7 +37,7 @@ public class Crawler : ICrawler
 
                 var buffer = new byte[4096];
 
-                var sourceLen = response.Content.Headers.ContentLength ?? -1L;
+                var sourceLen = httpContent.Headers.ContentLength ?? -1L;
 
                 var (_, startTop) = Console.GetCursorPosition();
 
@@ -79,7 +79,7 @@ public class Crawler : ICrawler
         Console.WriteLine("Download has completed successfully");
     }
 
-    public async Task<HttpResponseMessage> FetchContentsAsync(Uri url)
+    public async Task<HttpContent> FetchContentAsync(Uri url)
     {
         var request = new HttpRequestMessage(HttpMethod.Get, url);
         Console.WriteLine($"Sending a {request.Method} request to the server");
@@ -88,10 +88,10 @@ public class Crawler : ICrawler
 
         Console.WriteLine($"Files successfully fetched\n");
 
-        return response;
+        return response.Content;
     }
 
-    public async Task<HttpResponseMessage> PostDataAsync(string? data, Uri url)
+    public async Task<HttpContent> PostDataAsync(string? data, Uri url)
     {
         FormUrlEncodedContent? formContent = null;
 
@@ -113,6 +113,6 @@ public class Crawler : ICrawler
 
         Console.WriteLine("Data successfully posted\n");
 
-        return response;
+        return response.Content;
     }
 }

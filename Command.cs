@@ -45,26 +45,26 @@ public class Command
         return await rootCommand.InvokeAsync(args);
     }
 
-    private async Task HandleOptionsAsync(string? output, string? request, string? data, Uri url)
+    private async Task HandleOptionsAsync(string? outputFile, string? request, string? data, Uri url)
     {
         try
         {
-            Task<HttpResponseMessage> task;
+            Task<HttpContent> crawlerTask;
 
             if (data != null || request == Http.Post)
-                task = _crawler.PostDataAsync(data, url);
+                crawlerTask = _crawler.PostDataAsync(data, url);
             else if (request == Http.Get)
-                task = _crawler.FetchContentsAsync(url);
+                crawlerTask = _crawler.FetchContentAsync(url);
             else
-                task = _crawler.FetchContentsAsync(url);
+                crawlerTask = _crawler.FetchContentAsync(url);
 
             Console.WriteLine("Waiting for a response...");
-            var response = await task;
+            var httpContent = await crawlerTask;
 
-            if (output != null)
-                await _crawler.DownloadResponseContentsAsync(output, response);
+            if (outputFile != null)
+                await _crawler.DownloadContentAsync(outputFile, httpContent);
             else
-                await _crawler.DisplayResponseContentsAsync(response);
+                await _crawler.DisplayContentAsync(httpContent);
         }
         catch (HttpRequestException e)
         {
