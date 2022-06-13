@@ -12,6 +12,8 @@ public static class Controller
         // Website to post file for testing purposes
         // "https://httpbin.org/post"
         ICrawler crawler = new Crawler();
-        return await new Command(crawler).InvokeCommandAsync(args);
+        var command = new Command(crawler);
+
+        return await command.InvokeCommandAsync(args);
     }
 }

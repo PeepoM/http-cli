@@ -6,7 +6,7 @@ public interface ICrawler
 
     Task DownloadContentAsync(string fileName, HttpContent httpContent);
 
-    Task<HttpContent> FetchContentAsync(Uri url);
+    Task<HttpResponseMessage> FetchDataAsync(Uri url);
 
-    Task<HttpContent> PostDataAsync(string? data, Uri url);
+    Task<HttpResponseMessage> PostDataAsync(string? data, Uri url);
 }

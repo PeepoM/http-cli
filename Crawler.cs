@@ -79,7 +79,7 @@ public class Crawler : ICrawler
         Console.WriteLine("Download has completed successfully");
     }
 
-    public async Task<HttpContent> FetchContentAsync(Uri url)
+    public async Task<HttpResponseMessage> FetchDataAsync(Uri url)
     {
         var request = new HttpRequestMessage(HttpMethod.Get, url);
         Console.WriteLine($"Sending a {request.Method} request to the server");
@@ -88,10 +88,10 @@ public class Crawler : ICrawler
 
         Console.WriteLine($"Files successfully fetched\n");
 
-        return response.Content;
+        return response;
     }
 
-    public async Task<HttpContent> PostDataAsync(string? data, Uri url)
+    public async Task<HttpResponseMessage> PostDataAsync(string? data, Uri url)
     {
         FormUrlEncodedContent? formContent = null;
 
@@ -113,6 +113,6 @@ public class Crawler : ICrawler
 
         Console.WriteLine("Data successfully posted\n");
 
-        return response.Content;
+        return response;
     }
 }
